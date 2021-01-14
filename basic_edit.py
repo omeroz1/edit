@@ -1,8 +1,13 @@
 import os
+import PIL.Image
 from PIL import Image
 from PIL import ImageFilter
 from PIL import ImageEnhance
+from PIL import ImageTk
 import numpy as np
+from tkinter import *
+import datetime
+from functools import partial
 
 
 def read_image(path):
@@ -10,8 +15,11 @@ def read_image(path):
     :param path: the path of the image
     :return: the photo in the variable: 'image'
     """
+    global ID
     try:
-        image = Image.open(path)
+        image = PIL.Image.open(path)
+        date = datetime.datetime.now()
+        ID = date.strftime('%d') + date.strftime('%m') + date.strftime('%H') + date.strftime('%M')
         return image
     except Exception as e:
         print(e)
@@ -40,30 +48,44 @@ def resize_image(image, height, width):
     :param width:new width in pixels
     :return: new image
     """
-    resized_image = image.resize((height, width))
+    resized_image = image.resize((height, width), PIL.Image.ANTIALIAS)
     return resized_image
 
 
-def resize_copy_to_file(max_pixel):
+def get_image_info(image):
+    for f in os.listdir('.'):
+        if f.endswith('.jpg') or f.endswith('.png') or f.endswith('.JPG') or f.endswith('.PNG'):
+            i = read_image(f)
+            if i.size == image.size:
+                iname, iend = os.path.splitext(f)
+                return iname, iend
+
+
+def save_to_dir(image):
+    path = os.getcwd()
+    iname, iend = get_image_info(image)
+    if os.path.exists(os.path.join(path, str(ID))):
+        image.save('{}/{}_{}{}'.format(str(ID), iname, str(ID), iend))
+    else:
+        os.mkdir(os.path.join(path, str(ID)))
+        image.save('{}/{}_{}{}'.format(str(ID), iname, str(ID), iend))
+
+
+def copy_all_to_file():
     """
-    takes all of the photos in the directory and resizes them to the 'max_pixel' limit.
-    :param max_pixel: the maximum length and width of the image.
-    :return: the new image in a folder named after the number of the 'max_pixel' in the same directory.
+    copy the image to the directory named after the image ID.
+    example: 'deni.jpg' will be 'deni_ID.jpg'
     """
     path = os.getcwd()
-    pix_size = (max_pixel, max_pixel)
     for f in os.listdir('.'):
-        if f.endswith('.jpg'):
-            i = Image.open(f)
+        if f.endswith('.jpg') or f.endswith('.png') or f.endswith('.JPG') or f.endswith('.PNG'):
+            i = PIL.Image.open(f)
             iname, iend = os.path.splitext(f)
-            print(iend)
-            if os.path.exists(os.path.join(path, str(max_pixel))):
-                i.thumbnail(pix_size)
-                i.save('{}/{}_{}{}'.format(str(max_pixel), iname, str(max_pixel), iend))
+            if os.path.exists(os.path.join(path, str(ID))):
+                i.save('{}/{}_{}{}'.format(str(ID), iname, str(ID), iend))
             else:
-                os.mkdir(os.path.join(path, str(max_pixel)))
-                i.thumbnail(pix_size)
-                i.save('{}/{}_{}{}'.format(str(max_pixel), iname, str(max_pixel), iend))
+                os.mkdir(os.path.join(path, str(ID)))
+                i.save('{}/{}_{}{}'.format(str(ID), iname, str(ID), iend))
 
 
 def crop_image(image, xtop, ytop, xbottom, ybottom):
@@ -75,10 +97,11 @@ def crop_image(image, xtop, ytop, xbottom, ybottom):
     :return: a cropped image
     """
     cropped = image.crop((xtop, ytop, xbottom, ybottom))
-    return cropped
+    save_to_dir(cropped)
+    cropped.show()
 
 
-def center_image(image):
+def get_center_image(image):
     """
     finds the center of the image.
     xtop & ytop = the top left cordinates (xtop, ytop)
@@ -101,15 +124,9 @@ def rotate_image(image, angle):
     :param angle: the angle to rotate the image
     :return: a rotated image
     """
-    return image.rotate(angle)
-
-
-def gray_image(image):
-    """
-    :return: gray image
-    """
-    grayscale = image.convert("L")
-    return grayscale
+    updated_image = image.rotate(angle)
+    save_to_dir(updated_image)
+    updated_image.show()
 
 
 def change_image_color(image, color, level):
@@ -213,60 +230,70 @@ def change_image_color(image, color, level):
     if color == 'red':
         if level == 1:
             selected_color = rl
-        if level == 2:
+        elif level == 2:
             selected_color = rm
-        if level == 3:
+        elif level == 3:
             selected_color = rs
         else:
             print("ERROR. level value can be: 1,2,3")
-    if color == 'green':
+    elif color == 'green':
         if level == 1:
             selected_color = gl
-        if level == 2:
+        elif level == 2:
             selected_color = gm
-        if level == 3:
+        elif level == 3:
             selected_color = gs
         else:
             print("ERROR. level value can be: 1,2,3")
-    if color == 'blue':
+    elif color == 'blue':
         if level == 1:
             selected_color = bl
-        if level == 2:
+        elif level == 2:
             selected_color = bm
-        if level == 3:
+        elif level == 3:
             selected_color = bs
         else:
             print("ERROR. level value can be: 1,2,3")
-    if color == 'turquoise':
+    elif color == 'turquoise':
         if level == 1:
             selected_color = tl
-        if level == 2:
+        elif level == 2:
             selected_color = tm
-        if level == 3:
+        elif level == 3:
             selected_color = ts
         else:
             print("ERROR. level value can be: 1,2,3")
-    if color == 'yellow':
+    elif color == 'yellow':
         if level == 1:
             selected_color = yl
-        if level == 2:
+        elif level == 2:
             selected_color = ym
-        if level == 3:
+        elif level == 3:
             selected_color = ys
         else:
             print("ERROR. level value can be: 1,2,3")
-    if color == 'purple':
+    elif color == 'purple':
         if level == 1:
             selected_color = pl
-        if level == 2:
+        elif level == 2:
             selected_color = pm
-        if level == 3:
+        elif level == 3:
             selected_color = ps
         else:
             print("ERROR. level value can be: 1,2,3")
+    if color == 'red' or color == 'green' or color == 'blue' or color == 'turquoise' or color == 'orange' \
+            or color == 'purple':
+        updated_image = image.convert("RGB", selected_color)
+        save_to_dir(updated_image)
+        updated_image.show()
+    else:
+        if color == 'grey' or color == 'gray':
+            grayscale = image.convert("L")
+            save_to_dir(grayscale)
+            grayscale.show()
 
-    updated_image = image.convert("RGB", selected_color)
-    return updated_image
+        else:
+            print("ERROR. color not found. color can be: red, green, blue, turquoise, orange, purple or grey")
 
 
 def comix_image(image):
@@ -274,14 +301,19 @@ def comix_image(image):
     :return: comix image
     """
     comix = image.convert("P")
-    return comix
+    comix.show()
 
 
-def bw_image(image, threshold):
+def gray_image(image):
+    grayscale = image.convert("L")
+    return grayscale
+
+
+def bw_image(image, hardness):
     """
     convert the image to black & white
     :param image: image given
-    :param threshold: bigger value -> more black.
+    :param hardness: bigger value -> more black.
                       lower value -> more white.
     :return: binary image
     """
@@ -289,69 +321,71 @@ def bw_image(image, threshold):
     arr = np.array(gray)
     for i in range(0, len(arr)):
         for j in range(0, len(arr[i])):
-            if arr[i][j] >= threshold:
+            if arr[i][j] >= hardness:
                 arr[i][j] = 255
             else:
                 arr[i][j] = 0
-    return Image.fromarray(arr)
+    PIL.Image.fromarray(arr).show()
 
 
 def flip_image(image):
+    """
+    flips the image
+    """
     img_array = np.array(image)
     img_flipped_data = np.flip(img_array, axis=1)
-    img_flipped = Image.fromarray(img_flipped_data)
+    img_flipped = PIL.Image.fromarray(img_flipped_data)
     img_flipped.show()
 
 
 def brightness_image(image):
+    """
+    increase or decrese the brightness.
+    img_light > 1 = brighter
+    img_light < 1 = darker
+    """
     enhancer = ImageEnhance.Brightness(image)
-    img_light = enhancer.enhance(0.5)
+    img_light = enhancer.enhance(3)
+    save_to_dir(img_light)
     img_light.show()
 
+
 def contrast_image(image):
+    """
+    increase or decrese the contrast.
+    updated_img > 1 = more contrast
+    updated_img < 1 = less contrast
+    """
     enhancer = ImageEnhance.Contrast(image)
-    updated_img = enhancer.enhance(0.5)
+    updated_img = enhancer.enhance()
+    save_to_dir(updated_img)
     updated_img.show()
 
 
 def sharpness_image(image):
+    """
+    increase or decrese the sharpness.
+    updated_img > 1 = more sharpness
+    updated_img < 1 = less sharpness
+    """
     enhancer = ImageEnhance.Sharpness(image)
-    updated_img = enhancer.enhance(1.5)
+    updated_img = enhancer.enhance(5)
+    save_to_dir(updated_img)
     updated_img.show()
 
 
 def more_color_image(image):
+    """
+    increase or decrese the color.
+    updated_img > 1 = more color
+    updated_img < 1 = less color
+    """
     enhancer = ImageEnhance.Color(image)
     updated_img = enhancer.enhance(1.5)
     updated_img.show()
 
+
 if __name__ == '__main__':
     image_path = 'deni.jpg'
     image = read_image(image_path)
-    # image.show()
-    img_array = np.array(image)
-    # print(img_array)
-    # print(get_image_size(image))
-    # cropped = crop_image(image, 100, 100, 100, 100)
-    # cropped.show()
-    """center = center_image(image)
-    xtop, ytop, xbottom, ybottom = center
-    print(center)
-    print(get_image_size(image))
-    center_cropped = crop_image(image, 0, 0, 100, 250)
-    center_cropped.show()"""
-    # print(img_array.shape)
-    # gray = gray_image(image)
-    # gray.show()
-    """bw_photo = bw_image(image, 100)
-    bw_photo.show()
-   colored = change_image_color(image, 'green', 3)
-    colored.show()
-   edges = image.filter(ImageFilter.FIND_EDGES)
-    bands = edges.split()
-    outline = bands[0].point(lambda x:255 if x<100 else 0)
-    outline.show()"""
-    # flip_image(image)
-    #brightness_image(image)
-    # contrast_image(image)
-    #color_image(image)
+    contrast_image(image)
